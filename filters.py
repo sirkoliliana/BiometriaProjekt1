@@ -1,0 +1,1 @@
+# TODO: Implement all filters in this file. Later import them in app.py and use them in apply_operation.

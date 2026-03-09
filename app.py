@@ -1,8 +1,7 @@
 import dearpygui.dearpygui as dpg
 import numpy as np
 from PIL import Image
-from pixel_transformations import monotone
-
+from pixel_transformations import monotone, grey_scale, gamma_transform, log_transform, invert
 IMG_W, IMG_H = 400, 400
 
 # original_image: never modified, always the loaded file
@@ -53,10 +52,17 @@ def run_operation(img: np.ndarray, op: dict) -> np.ndarray:
         return monotone(img)
 
     elif name == "Brightness":
-        return img  
+        return log_transform(img)
 
     elif name == "Gamma":
-        return img  
+        g_val = params.get("gamma", 1.0)    
+        return gamma_transform(img, g_val)
+    
+    elif name == "Invert":
+        return invert(img)
+
+    elif name == "Grayscale":
+        return grey_scale(img)
 
     elif name == "Binarize":
         val = params["threshold"]
@@ -121,6 +127,8 @@ def add_pixel_transform():
 
     if selected == "Monotone":
         op = {"name": "Monotone", "params": {}}
+    elif selected == "Grayscale":
+        op = {"name": "Grayscale", "params": {}}
     elif selected == "Threshold":
         op = {"name": "Threshold", "params": {"threshold": dpg.get_value("threshold_slider")}}
     elif selected == "Binarize":
@@ -245,6 +253,7 @@ def main():
                                 # TODO: add more options
                                 ["None", 
                                  "Monotone", 
+                                 "Grayscale",
                                  "Brightness", 
                                  "Gamma", 
                                  "Binarize", 

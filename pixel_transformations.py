@@ -47,3 +47,45 @@ def invert(img):
 
     res = 255 - mat
     return res.astype('uint8')
+
+# Binaryzacja - metoda lokalna Bernsena
+# wyznaczanie t lokalnie na podstawie min max okienka
+def binarize(img, window_size = 15, contrast_threshold=15):
+    mat = np.array(img).astype(float)
+
+    # Greyscale (grey przechowuje tylko jedną wartość a nie rgb)
+    gray = (mat[:, :, 0].astype(float) + mat[:, :, 1].astype(float) + mat[:, :, 2].astype(float)) / 3
+    gray = gray.astype(np.uint8)
+
+    h, w = gray.shape[:2]
+    # Tworzę macierz wynikową (płaską)
+    res = np.zeros_like(gray)
+
+    # Ramka żeby okno mogło wyjść
+    padding = window_size // 2
+    padded_gray = np.pad(gray, padding, mode='edge')
+
+    # Petla po każdym pixelu
+    for y in range(h):
+        for x in range(w):
+            # Obliczanie min, max i mid dla okna
+            window = padded_gray[y : y + window_size, x : x + window_size]
+            min_val = np.min(window)
+            max_val = np.max(window)
+            mid_val = (max_val+min_val)/2
+
+            if (max_val - min_val) < contrast_threshold:
+                # Jeśli bardzo mały kontrast dookoła ustalam kolor
+                # na podstawie otoczenia
+                res[y, x] = 255 if mid_val > 128 else 0
+            else:
+                # Binaryzacja
+                res[y, x] = 255 if gray[y, x] > mid_val else 0
+
+    return np.stack([res, res, res], axis=-1)
+
+
+
+
+
+

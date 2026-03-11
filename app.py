@@ -1,7 +1,9 @@
 import dearpygui.dearpygui as dpg
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageOps
 from pixel_transformations import monotone, grey_scale, gamma_transform, log_transform, invert, binarize
+
+
 IMG_W, IMG_H = 400, 400
 
 # original_image: never modified, always the loaded file
@@ -28,11 +30,25 @@ def numpy_to_dpg(img: np.ndarray) -> list:
 def update_histogram(img: np.ndarray):
     gray = img.mean(axis=2) if img.ndim == 3 else img
     counts, bin_edges = np.histogram(gray.flatten(), bins=256, range=(0, 255))
-    dpg.delete_item("hist_series")
-    dpg.add_bar_series(
-        bin_edges[:-1].tolist(), counts.tolist(),
-        tag="hist_series", parent="histogram_y_axis", weight=1.0
+    dpg.configure_item(
+        "hist_series",
+        x=bin_edges[:-1].tolist(),
+        y=counts.tolist()
     )
+
+# TODO: add separate histograms for R,G,B channels and update them in update_histogram, instead of just one for the average 
+def update_rgb_histogram(img: np.ndarray):
+    if img.ndim != 3 or img.shape[2] < 3:
+        return
+    colors = ["red", "green", "blue"]
+    for i, color in enumerate(colors):
+        channel = img[:, :, i]
+        counts, bin_edges = np.histogram(channel.flatten(), bins=256, range=(0, 255))
+        dpg.configure_item(
+            f"hist_series_{color}",
+            x=bin_edges[:-1].tolist(),
+            y=counts.tolist()
+        )
 
 
 def update_pipeline_list():
@@ -80,6 +96,7 @@ def apply_pipeline():
     current_image = result
     dpg.set_value("image_texture", numpy_to_dpg(current_image))
     update_histogram(current_image)
+    update_rgb_histogram(current_image)
 
 
 #  UI CALLBACKS
@@ -166,6 +183,7 @@ def reset_pipeline():
     update_pipeline_list()
     dpg.set_value("image_texture", numpy_to_dpg(current_image))
     update_histogram(current_image)
+    update_rgb_histogram(current_image)
 
 
 #  MAIN
@@ -179,19 +197,18 @@ def main():
     # File dialog callbacks
     def open_callback(sender, app_data):
         global original_image, current_image
+
         path = app_data["file_path_name"]
         img = Image.open(path).convert("RGB")
-        img.thumbnail((IMG_W, IMG_H), Image.LANCZOS)
+        img = Image.open(path).convert("RGB")
+        img = ImageOps.fit(img, (IMG_W, IMG_H), Image.LANCZOS)  # ← replaces thumbnail + padding
         original_image = np.array(img)
-        padded = np.zeros((IMG_H, IMG_W, 3), dtype=np.uint8)
-        h, w = original_image.shape[:2]
-        padded[:h, :w] = original_image
-        original_image = padded
         pipeline.clear()
         update_pipeline_list()
         current_image = original_image.copy()
         dpg.set_value("image_texture", numpy_to_dpg(current_image))
         update_histogram(current_image)
+        update_rgb_histogram(current_image)
 
     def save_callback(sender, app_data):
         path = app_data["file_path_name"]
@@ -325,14 +342,46 @@ def main():
                     dpg.add_spacer(height=6)
 
                     # Histogram
-                    dpg.add_text("Histogram")
+                    dpg.add_text("Gray-scale Histogram")
                     with dpg.plot(label="", height=200, width=-1, tag="hist_plot"):
                         dpg.add_plot_axis(dpg.mvXAxis, label="Pixel Value")
                         dpg.add_plot_axis(dpg.mvYAxis, label="Count", tag="histogram_y_axis")
                         dpg.add_bar_series([], [], tag="hist_series",
                                            parent="histogram_y_axis", weight=1.0)
+                        
+                    # Create themes first
+                    with dpg.theme() as red_theme:
+                        with dpg.theme_component(dpg.mvBarSeries):
+                            dpg.add_theme_color(dpg.mvPlotCol_Fill, [255, 50, 50, 200], category=dpg.mvThemeCat_Plots)
+                            dpg.add_theme_color(dpg.mvPlotCol_Line, [255, 50, 50, 255], category=dpg.mvThemeCat_Plots)
+
+                    with dpg.theme() as green_theme:
+                        with dpg.theme_component(dpg.mvBarSeries):
+                            dpg.add_theme_color(dpg.mvPlotCol_Fill, [50, 255, 50, 200], category=dpg.mvThemeCat_Plots)
+                            dpg.add_theme_color(dpg.mvPlotCol_Line, [50, 255, 50, 255], category=dpg.mvThemeCat_Plots)
+
+                    with dpg.theme() as blue_theme:
+                        with dpg.theme_component(dpg.mvBarSeries):
+                            dpg.add_theme_color(dpg.mvPlotCol_Fill, [50, 100, 255, 200], category=dpg.mvThemeCat_Plots)
+                            dpg.add_theme_color(dpg.mvPlotCol_Line, [50, 100, 255, 255], category=dpg.mvThemeCat_Plots)
+                                        # Plot
+                    dpg.add_text("RGB Histograms")
+                    with dpg.plot(label="", height=200, width=-1, tag="hist_plot_rgb"):
+                        dpg.add_plot_axis(dpg.mvXAxis, label="Pixel Value")
+                        dpg.add_plot_axis(dpg.mvYAxis, label="Count", tag="histogram_rgb_y_axis")
+
+                        dpg.add_bar_series([], [], tag="hist_series_red", parent="histogram_rgb_y_axis", weight=1.0)
+                        dpg.add_bar_series([], [], tag="hist_series_green", parent="histogram_rgb_y_axis", weight=1.0)
+                        dpg.add_bar_series([], [], tag="hist_series_blue", parent="histogram_rgb_y_axis", weight=1.0)
+
+                    # Bind themes
+                    dpg.bind_item_theme("hist_series_red", red_theme)
+                    dpg.bind_item_theme("hist_series_green", green_theme)
+                    dpg.bind_item_theme("hist_series_blue", blue_theme)
+
 
     update_histogram(current_image)
+    update_rgb_histogram(current_image)
 
     dpg.setup_dearpygui()
     dpg.show_viewport()

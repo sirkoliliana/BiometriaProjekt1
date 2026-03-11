@@ -1,7 +1,7 @@
 import dearpygui.dearpygui as dpg
 import numpy as np
 from PIL import Image, ImageOps
-from pixel_transformations import monotone, grey_scale, gamma_transform, log_transform, invert, binarize
+from pixel_transformations import monotone, grey_scale, gamma_transform, log_transform, invert, binarize, histogram_equalization, histogram_equalization_3_chanel
 
 
 IMG_W, IMG_H = 400, 400
@@ -35,12 +35,14 @@ def update_histogram(img: np.ndarray):
         x=bin_edges[:-1].tolist(),
         y=counts.tolist()
     )
+    dpg.set_axis_limits("histogram_y_axis", 0, int(counts.max() * 1.05))
 
 # TODO: add separate histograms for R,G,B channels and update them in update_histogram, instead of just one for the average 
 def update_rgb_histogram(img: np.ndarray):
     if img.ndim != 3 or img.shape[2] < 3:
         return
     colors = ["red", "green", "blue"]
+    max_count = 0
     for i, color in enumerate(colors):
         channel = img[:, :, i]
         counts, bin_edges = np.histogram(channel.flatten(), bins=256, range=(0, 255))
@@ -49,6 +51,8 @@ def update_rgb_histogram(img: np.ndarray):
             x=bin_edges[:-1].tolist(),
             y=counts.tolist()
         )
+        max_count = max(max_count, int(counts.max()))
+    dpg.set_axis_limits("histogram_rgb_y_axis", 0, int(max_count * 1.05))
 
 
 def update_pipeline_list():
@@ -83,6 +87,12 @@ def run_operation(img: np.ndarray, op: dict) -> np.ndarray:
     elif name == "Binarize":
         c_val = params.get("contrast", 15)
         return binarize(img, window_size=15, contrast_threshold=c_val)
+
+    elif name == "Histogram Equalization (Gray)":
+        return histogram_equalization(img)
+    
+    elif name == "Histogram Equalization (RGB)":
+        return histogram_equalization_3_chanel(img)
 
     return img
 
@@ -159,6 +169,11 @@ def add_pixel_transform():
         op = {"name": "Gamma", "params": {"gamma": dpg.get_value("gamma_slider")}}
     elif selected == "Binarize":
         op = {"name": "Binarize", "params": {"contrast": dpg.get_value("binarize_slider")}}
+    elif selected == "Histogram Equalization (Gray)":
+        op = {"name": "Histogram Equalization (Gray)", "params": {}}
+
+    elif selected == "Histogram Equalization (RGB)":
+        op = {"name": "Histogram Equalization (RGB)", "params": {}}
     else:
         return
 
@@ -201,7 +216,7 @@ def main():
         path = app_data["file_path_name"]
         img = Image.open(path).convert("RGB")
         img = Image.open(path).convert("RGB")
-        img = ImageOps.fit(img, (IMG_W, IMG_H), Image.LANCZOS)  # ← replaces thumbnail + padding
+        img = ImageOps.fit(img, (IMG_W, IMG_H), Image.LANCZOS) 
         original_image = np.array(img)
         pipeline.clear()
         update_pipeline_list()
@@ -278,7 +293,9 @@ def main():
                                  "Gamma", 
                                  "Threshold", 
                                  "Binarize",
-                                 "Invert"],
+                                 "Invert",
+                                 "Histogram Equalization (Gray)",
+                                 "Histogram Equalization (RGB)"],
                                 label="Transform", default_value="None",
                                 tag="pt_combo", callback=on_pt_change, width=200
                             )
@@ -352,18 +369,18 @@ def main():
                     # Create themes first
                     with dpg.theme() as red_theme:
                         with dpg.theme_component(dpg.mvBarSeries):
-                            dpg.add_theme_color(dpg.mvPlotCol_Fill, [255, 50, 50, 200], category=dpg.mvThemeCat_Plots)
-                            dpg.add_theme_color(dpg.mvPlotCol_Line, [255, 50, 50, 255], category=dpg.mvThemeCat_Plots)
+                            dpg.add_theme_color(dpg.mvPlotCol_Fill, [255, 50, 50, 100], category=dpg.mvThemeCat_Plots)
+                            dpg.add_theme_color(dpg.mvPlotCol_Line, [255, 50, 50, 100], category=dpg.mvThemeCat_Plots)
 
                     with dpg.theme() as green_theme:
                         with dpg.theme_component(dpg.mvBarSeries):
-                            dpg.add_theme_color(dpg.mvPlotCol_Fill, [50, 255, 50, 200], category=dpg.mvThemeCat_Plots)
-                            dpg.add_theme_color(dpg.mvPlotCol_Line, [50, 255, 50, 255], category=dpg.mvThemeCat_Plots)
+                            dpg.add_theme_color(dpg.mvPlotCol_Fill, [50, 255, 50, 100], category=dpg.mvThemeCat_Plots)
+                            dpg.add_theme_color(dpg.mvPlotCol_Line, [50, 255, 50, 100], category=dpg.mvThemeCat_Plots)
 
                     with dpg.theme() as blue_theme:
                         with dpg.theme_component(dpg.mvBarSeries):
-                            dpg.add_theme_color(dpg.mvPlotCol_Fill, [50, 100, 255, 200], category=dpg.mvThemeCat_Plots)
-                            dpg.add_theme_color(dpg.mvPlotCol_Line, [50, 100, 255, 255], category=dpg.mvThemeCat_Plots)
+                            dpg.add_theme_color(dpg.mvPlotCol_Fill, [50, 100, 255, 100], category=dpg.mvThemeCat_Plots)
+                            dpg.add_theme_color(dpg.mvPlotCol_Line, [50, 100, 255, 100], category=dpg.mvThemeCat_Plots)
                                         # Plot
                     dpg.add_text("RGB Histograms")
                     with dpg.plot(label="", height=200, width=-1, tag="hist_plot_rgb"):

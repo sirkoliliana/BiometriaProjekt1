@@ -84,8 +84,55 @@ def binarize(img, window_size = 15, contrast_threshold=15):
 
     return np.stack([res, res, res], axis=-1)
 
+# OPERACJE NA HISOTGRAMACH
 
+def histogram_equalization(img):
+    mat = np.array(img).astype(float)
 
+    # Greyscale
+    gray = (mat[:, :, 0].astype(float) + mat[:, :, 1].astype(float) + mat[:, :, 2].astype(float)) / 3
+    gray = gray.astype(np.uint8)
+
+    # Histogram
+    hist, _ = np.histogram(gray.flatten(), bins=256, range=(0, 256))
+
+    # Dystrybuanta
+    cdf = hist.cumsum()
+    cdf_normalized = (cdf - cdf.min()) * 255 / (cdf.max() - cdf.min())
+
+    # Mapowanie pikseli
+    equalized_gray = np.interp(gray.flatten(), np.arange(256), cdf_normalized)
+    equalized_gray = equalized_gray.reshape(gray.shape).astype(np.uint8)
+
+    return np.stack([equalized_gray, equalized_gray, equalized_gray], axis=-1)
+
+def histogram_equalization_3_chanel(img):
+    mat = np.array(img).astype(float)
+
+    # Histogramy dla każdego kanału
+    hist_r, _ = np.histogram(mat[:, :, 0].flatten(), bins=256, range=(0, 256))
+    hist_g, _ = np.histogram(mat[:, :, 1].flatten(), bins=256, range=(0, 256))
+    hist_b, _ = np.histogram(mat[:, :, 2].flatten(), bins=256, range=(0, 256))
+
+    # Dystrybuanty
+    cdf_r = hist_r.cumsum()
+    cdf_g = hist_g.cumsum()
+    cdf_b = hist_b.cumsum()
+
+    cdf_r_normalized = (cdf_r - cdf_r.min()) * 255 / (cdf_r.max() - cdf_r.min())
+    cdf_g_normalized = (cdf_g - cdf_g.min()) * 255 / (cdf_g.max() - cdf_g.min())
+    cdf_b_normalized = (cdf_b - cdf_b.min()) * 255 / (cdf_b.max() - cdf_b.min())
+
+    # Mapowanie pikseli dla każdego kanału
+    equalized_r = np.interp(mat[:, :, 0].flatten(), np.arange(256), cdf_r_normalized)
+    equalized_g = np.interp(mat[:, :, 1].flatten(), np.arange(256), cdf_g_normalized)
+    equalized_b = np.interp(mat[:, :, 2].flatten(), np.arange(256), cdf_b_normalized)
+
+    equalized_img = np.stack([equalized_r.reshape(mat.shape[0], mat.shape[1]),
+                              equalized_g.reshape(mat.shape[0], mat.shape[1]),
+                              equalized_b.reshape(mat.shape[0], mat.shape[1])], axis=-1)
+
+    return equalized_img.astype(np.uint8)
 
 
 

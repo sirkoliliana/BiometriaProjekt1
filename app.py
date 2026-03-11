@@ -1,7 +1,8 @@
 import dearpygui.dearpygui as dpg
 import numpy as np
 from PIL import Image, ImageOps
-from pixel_transformations import monotone
+from pixel_transformations import monotone, grey_scale, gamma_transform, log_transform, invert, binarize
+
 
 IMG_W, IMG_H = 400, 400
 
@@ -67,14 +68,21 @@ def run_operation(img: np.ndarray, op: dict) -> np.ndarray:
         return monotone(img)
 
     elif name == "Brightness":
-        return img  
+        return log_transform(img)
 
     elif name == "Gamma":
-        return img  
+        g_val = params.get("gamma", 1.0)    
+        return gamma_transform(img, g_val)
+    
+    elif name == "Invert":
+        return invert(img)
+
+    elif name == "Grayscale":
+        return grey_scale(img)
 
     elif name == "Binarize":
-        val = params["threshold"]
-        return img  
+        c_val = params.get("contrast", 15)
+        return binarize(img, window_size=15, contrast_threshold=c_val)
 
     return img
 
@@ -105,10 +113,13 @@ def on_filter_change(sender, app_data):
 def on_pt_change(sender, app_data):
     dpg.hide_item("threshold_options")
     dpg.hide_item("gamma_options")
+    dpg.hide_item("binarize_options")
     if app_data == "Threshold":
         dpg.show_item("threshold_options")
     elif app_data == "Gamma":
         dpg.show_item("gamma_options")
+    elif app_data == "Binarize":
+        dpg.show_item("binarize_options")
 
 
 def add_filter():
@@ -136,16 +147,18 @@ def add_pixel_transform():
 
     if selected == "Monotone":
         op = {"name": "Monotone", "params": {}}
+    elif selected == "Grayscale":
+        op = {"name": "Grayscale", "params": {}}
     elif selected == "Threshold":
         op = {"name": "Threshold", "params": {"threshold": dpg.get_value("threshold_slider")}}
-    elif selected == "Binarize":
-        op = {"name": "Binarize", "params": {"threshold": dpg.get_value("threshold_slider")}}
     elif selected == "Invert":
         op = {"name": "Invert", "params": {}}
     elif selected == "Brightness":
         op = {"name": "Brightness", "params": {"factor": dpg.get_value("brightness_slider")}}
     elif selected == "Gamma":
         op = {"name": "Gamma", "params": {"gamma": dpg.get_value("gamma_slider")}}
+    elif selected == "Binarize":
+        op = {"name": "Binarize", "params": {"contrast": dpg.get_value("binarize_slider")}}
     else:
         return
 
@@ -260,9 +273,11 @@ def main():
                                 # TODO: add more options
                                 ["None", 
                                  "Monotone", 
+                                 "Grayscale",
                                  "Brightness", 
                                  "Gamma", 
-                                 "Binarize", 
+                                 "Threshold", 
+                                 "Binarize",
                                  "Invert"],
                                 label="Transform", default_value="None",
                                 tag="pt_combo", callback=on_pt_change, width=200
@@ -279,6 +294,12 @@ def main():
                                 dpg.add_text("Gamma Options")
                                 dpg.add_slider_float(label="Gamma", tag="gamma_slider",
                                                      min_value=0.1, max_value=5.0, default_value=1.0)
+                                
+                            # Opcje dla Bernsena (Binarize)
+                            with dpg.group(tag="binarize_options", show=False):
+                                dpg.add_text("Bernsen Method Settings")
+                                dpg.add_slider_int(label="Contrast Sensitivity", tag="binarize_slider",
+                                                   min_value=0, max_value=50, default_value=15)
                                 
                             # TODO: add more options groups here for other transformations
                                 

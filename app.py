@@ -1,9 +1,36 @@
 import dearpygui.dearpygui as dpg
 import numpy as np
 from PIL import Image, ImageOps
-from pixel_transformations import contrast_stretching, contrast_stretching_3_channel, grey_scale, gamma_transform, log_transform, invert, binarize, histogram_equalization, histogram_equalization_3_chanel, contrast_stretching_3_channel
-from pixel_transformations import add_images, subtract_images, mix_images
 
+# transformacje punktowe i histogramy
+from pixel_transformations import (
+    grey_scale, 
+    gamma_transform, 
+    log_transform, 
+    invert, 
+    histogram_equalization, 
+    histogram_equalization_3_chanel, 
+    contrast_stretching, 
+    contrast_stretching_3_channel
+)
+
+# binaryzacja i operacje na wielu obrazach
+from pixel_transformations import (
+    binarize_simple, 
+    binarize_bernsen, 
+    add_images, 
+    subtract_images, 
+    mix_images
+)
+
+# filtrówy (maseki)
+from filters import (
+    apply_kernel,
+    averaging_filter,
+    gaussian_blur, 
+    sharpen_filter, 
+    sobel
+)
 
 IMG_W, IMG_H = 400, 400
 
@@ -81,6 +108,10 @@ def run_operation(img: np.ndarray, op: dict) -> np.ndarray:
     name   = op["name"]
     params = op["params"]
 
+    #############
+    ##### Pixele
+    #############
+
     if name == "Brightness":
         return log_transform(img)
 
@@ -94,9 +125,13 @@ def run_operation(img: np.ndarray, op: dict) -> np.ndarray:
     elif name == "Grayscale":
         return grey_scale(img)
 
-    elif name == "Binarize":
+    elif name == "Binarize Bernsen":
         c_val = params.get("contrast", 15)
-        return binarize(img, window_size=15, contrast_threshold=c_val)
+        return binarize_bernsen(img, window_size=15, contrast_threshold=c_val)
+    
+    elif name == "Binarize simple":
+        t_val = params.get("threshold", 128)
+        return binarize_simple(img, t_val)
 
     elif name == "Histogram Equalization (Gray)":
         return histogram_equalization(img)
@@ -123,6 +158,27 @@ def run_operation(img: np.ndarray, op: dict) -> np.ndarray:
         alpha = params.get("alpha", 0.5)
         if added_img is not None:
             return mix_images(img, added_img, alpha)
+        
+    #############
+    ##### Filtry
+    #############
+
+    elif name == "Blur":
+        return averaging_filter(img, params.get("n", 3))
+        
+    elif name == "Gauss":
+        return gaussian_blur(img) # Zakładając, że funkcja nie potrzebuje n
+        
+    elif name == "Sharpen":
+        return sharpen_filter(img)
+        
+    elif name == "Sobel Edge Detection":
+        angle = params.get("degrees", 0)
+        return sobel(img, angle)
+    
+    elif name == "Custom Kernel":
+        custom_k = np.array(params.get("kernel"))
+        return apply_kernel(img, custom_k)
 
     return img
 
@@ -159,23 +215,31 @@ def apply_pipeline():
 
 def on_filter_change(sender, app_data):
     dpg.hide_item("blur_options")
-    dpg.hide_item("brightness_options")
-    if app_data == "Blur":
+    dpg.hide_item("sobel_options")
+    dpg.hide_item("custom_kernel_options")
+    
+    # suwak rozmiaru maski dla filtra uśredniającego
+    if app_data == "Blur (Averaging)":
         dpg.show_item("blur_options")
-    elif app_data == "Brightness":
-        dpg.show_item("brightness_options")
+
+    elif app_data == "Sobel Edge Detection":
+        dpg.show_item("sobel_options")
+
+    elif app_data == "Custom Kernel":
+        dpg.show_item("custom_kernel_options")
 
 
 def on_pt_change(sender, app_data):
     dpg.hide_item("threshold_options")
     dpg.hide_item("gamma_options")
     dpg.hide_item("binarize_options")
-    if app_data == "Threshold":
-        dpg.show_item("threshold_options")
-    elif app_data == "Gamma":
+
+    if app_data == "Gamma":
         dpg.show_item("gamma_options")
-    elif app_data == "Binarize":
+    elif app_data == "Binarize Bernsen":
         dpg.show_item("binarize_options")
+    elif app_data == "Binarize simple":
+        dpg.show_item("threshold_options")
     elif app_data == "Add Images":
         dpg.show_item("add_image_options")
     elif app_data == "Blend Image":
@@ -188,10 +252,36 @@ def add_filter():
     if selected == "None":
         return
 
-    if selected == "Blur":
-        op = {"name": "Blur", "params": {"kernel": dpg.get_value("blur_kernel")}}
-    elif selected == "Brightness":
-        op = {"name": "Brightness", "params": {"factor": dpg.get_value("brightness_slider")}}
+    if selected == "Blur (Averaging)":
+        # Pobieramy 'n' z suwaka blur_kernel
+        n_val = dpg.get_value("blur_kernel")
+        op = {"name": "Blur", "params": {"n": n_val}}
+        
+    elif selected == "Gaussian Blur":
+        op = {"name": "Gauss", "params": {}}
+        
+    elif selected == "Sharpen":
+        op = {"name": "Sharpen", "params": {}}
+        
+    elif selected == "Sobel Edge Detection":
+        angle = int(dpg.get_value("sobel_angle_combo"))
+        op = {"name": "Sobel", "params": {"degrees": angle}}
+
+    elif selected == "Custom Kernel":
+        # Budujemy macierz z pól wejściowych
+        rows = []
+        for i in range(3):
+            row = [dpg.get_value(f"k{i}{j}") for j in range(3)]
+            rows.append(row)
+        
+        kernel_np = np.array(rows)
+        op = {
+            "name": "Custom Kernel", 
+            "params": {
+                "kernel": kernel_np.tolist(),
+            }
+        }
+
     else:
         return
 
@@ -206,32 +296,44 @@ def add_pixel_transform():
         return
     elif selected == "Grayscale":
         op = {"name": "Grayscale", "params": {}}
-    elif selected == "Threshold":
-        op = {"name": "Threshold", "params": {"threshold": dpg.get_value("threshold_slider")}}
+
+    elif selected == "Binarize simple":
+        op = {"name": "Binarize simple", "params": {"threshold": dpg.get_value("threshold_slider")}}
+
     elif selected == "Invert":
         op = {"name": "Invert", "params": {}}
+
     elif selected == "Brightness":
         op = {"name": "Brightness", "params": {"factor": dpg.get_value("brightness_slider")}}
+    
     elif selected == "Gamma":
         op = {"name": "Gamma", "params": {"gamma": dpg.get_value("gamma_slider")}}
-    elif selected == "Binarize":
-        op = {"name": "Binarize", "params": {"contrast": dpg.get_value("binarize_slider")}}
+    
+    elif selected == "Binarize Bernsen":
+        op = {"name": "Binarize Bernsen", "params": {"contrast": dpg.get_value("binarize_slider")}}
+    
     elif selected == "Histogram Equalization (Gray)":
         op = {"name": "Histogram Equalization (Gray)", "params": {}}
+    
     elif selected == "Histogram Equalization (RGB)":
         op = {"name": "Histogram Equalization (RGB)", "params": {}}
+    
     elif selected == "Contrast Stretching (Gray)":
         op = {"name": "Contrast Stretching (Gray)", "params": {}}
+    
     elif selected == "Contrast Stretching (RGB)":
         op = {"name": "Contrast Stretching (RGB)", "params": {}}
+    
     elif selected == "Add Images":
         if added_images:
             op = {"name": "Add Images", "params": {"image": added_images[-1], "subtract": dpg.get_value("subtract_image_checkbox")}}
         else:
             return
+    
     elif selected == "Blend Image":
         if added_images:
             op = {"name": "Blend Image", "params": {"image": added_images[-1], "alpha": dpg.get_value("blend_alpha_slider")}}
+    
     else:
         return
 
@@ -349,8 +451,8 @@ def main():
                                  "Grayscale",
                                  "Brightness", 
                                  "Gamma", 
-                                 "Threshold", 
-                                 "Binarize",
+                                 "Binarize simple", 
+                                 "Binarize Bernsen",
                                  "Invert",
                                  "Add Images",
                                  "Blend Image",
@@ -414,9 +516,12 @@ def main():
                         with dpg.tab(label="Filters"):
                             dpg.add_combo(
                                 # TODO: add more options
-                                ["None", "Blur"],   
-                                label="Filter", default_value="None",
-                                tag="filter_combo", callback=on_filter_change, width=200
+                                ["None", "Custom Kernel", "Blur (Averaging)", "Gaussian Blur", "Sharpen", "Sobel Edge Detection"],   
+                                label="Filter", 
+                                default_value="None",
+                                tag="filter_combo", 
+                                callback=on_filter_change, 
+                                width=200
                             )
 
                             # groups of options for specific transformations, only one shown at a time based on selection
@@ -424,7 +529,33 @@ def main():
                                 dpg.add_text("Blur Options")
                                 dpg.add_slider_int(label="Kernel Size", tag="blur_kernel",
                                                    min_value=1, max_value=21, default_value=3)
+                                
+                            with dpg.group(tag="sobel_options", show=False):    
+                                dpg.add_text("Sobel Edge Detection")
+                                dpg.add_combo(
+                                    items=[0, 45, 90, 135, 180, 225, 270, 315], 
+                                    label="Angle (degrees)", 
+                                    tag="sobel_angle_combo",
+                                    default_value=0
+                                )
                             
+                            # Opcje dla Custom Kernel
+                            with dpg.group(tag="custom_kernel_options", show=False):
+                                dpg.add_text("Enter 3x3 Kernel Matrix:")
+                                
+                                with dpg.group(horizontal=True):
+                                    dpg.add_input_float(tag="k00", width=60, step=0, default_value=0.0)
+                                    dpg.add_input_float(tag="k01", width=60, step=0, default_value=0.0)
+                                    dpg.add_input_float(tag="k02", width=60, step=0, default_value=0.0)
+                                with dpg.group(horizontal=True):
+                                    dpg.add_input_float(tag="k10", width=60, step=0, default_value=0.0)
+                                    dpg.add_input_float(tag="k11", width=60, step=0, default_value=1.0) # środek domyślnie 1
+                                    dpg.add_input_float(tag="k12", width=60, step=0, default_value=0.0)
+                                with dpg.group(horizontal=True):
+                                    dpg.add_input_float(tag="k20", width=60, step=0, default_value=0.0)
+                                    dpg.add_input_float(tag="k21", width=60, step=0, default_value=0.0)
+                                    dpg.add_input_float(tag="k22", width=60, step=0, default_value=0.0)
+                                                            
                             # TODO: add more options for other filters here
 
                             dpg.add_spacer(height=4)

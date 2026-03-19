@@ -48,22 +48,36 @@ def invert(img):
     res = 255 - mat
     return res.astype('uint8')
 
+# Binaryzacja - klasyczna metoda
+def binarize_simple(img, t_val=128):
+    # zamiana na grayscale
+    if img.ndim == 3:
+        gray = (img[:, :, 0].astype(float) + img[:, :, 1].astype(float) + img[:, :, 2].astype(float)) / 3
+    else:
+        gray = img.astype(float)
+
+    # jeśli piksel > próg to 255, inaczej 0
+    binary = np.where(gray > t_val, 255, 0).astype(np.uint8)
+
+    # powrót do rgb
+    return np.stack([binary, binary, binary], axis=-1)
+
 # Binaryzacja - metoda lokalna Bernsena
 # wyznaczanie t lokalnie na podstawie min max okienka
-def binarize(img, window_size = 15, contrast_threshold=15):
+def binarize_bernsen(img, window_size = 15, contrast_threshold=15):
     mat = np.array(img).astype(float)
 
     # Greyscale (grey przechowuje tylko jedną wartość a nie rgb)
-    gray = (mat[:, :, 0].astype(float) + mat[:, :, 1].astype(float) + mat[:, :, 2].astype(float)) / 3
+    gray = (mat[:, :, 0] + mat[:, :, 1] + mat[:, :, 2]) / 3
     gray = gray.astype(np.uint8)
 
-    h, w = gray.shape[:2]
+    h, w = gray.shape
     # Tworzę macierz wynikową (płaską)
     res = np.zeros_like(gray)
 
     # Ramka żeby okno mogło wyjść
     padding = window_size // 2
-    padded_gray = np.pad(gray, padding, mode='edge')
+    padded_gray = np.pad(gray, padding, mode='edge').astype(float)
 
     # Petla po każdym pixelu
     for y in range(h):
@@ -74,6 +88,7 @@ def binarize(img, window_size = 15, contrast_threshold=15):
             max_val = np.max(window)
             mid_val = (max_val+min_val)/2
 
+            # Metoda Bernsena
             if (max_val - min_val) < contrast_threshold:
                 # Jeśli bardzo mały kontrast dookoła ustalam kolor
                 # na podstawie otoczenia

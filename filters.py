@@ -1,6 +1,6 @@
 import numpy as np
 
-# TODO: Implement all filters in this file. Later import them in app.py and use them in apply_operation.
+from pixel_transformations import grey_scale
 
 # Funkcja do użycia w innych, przejeżdza podaną maską po macierzy
 # Zwraca kolorowy obraz
@@ -34,13 +34,14 @@ def apply_kernel(img, kernel):
                 # window[:, :, k] to fragment obrazu dla jednego koloru
                 res[i, j, k] = np.sum(window[:, :, k] * kernel) / weights_sum
                 
-    return np.clip(res, 0, 255).astype(np.uint8)      
+    return res   
 
 
 # Filtr uśredniający z maską nxn (macierz samych jedynek)
 def averaging_filter(img, n):
     kernel = np.ones((n, n))
-    return apply_kernel(img, kernel)
+    res = apply_kernel(img, kernel)
+    return np.clip(res, 0, 255).astype(np.uint8)
 
 # Filtr Gaussa 3x3
 def gaussian_blur(img):
@@ -49,7 +50,8 @@ def gaussian_blur(img):
         [4, 12, 4],
         [1, 4, 1]
     ])
-    return apply_kernel(img, kernel)
+    res = apply_kernel(img, kernel)
+    return np.clip(res, 0, 255).astype(np.uint8)
 
 # Wyostrzanie
 def sharpen_filter(img):
@@ -58,7 +60,8 @@ def sharpen_filter(img):
         [-1,  5, -1],
         [ 0, -1,  0]
     ])
-    return apply_kernel(img, kernel)
+    res = apply_kernel(img, kernel)
+    return np.clip(res, 0, 255).astype(np.uint8)
 
 # Operator Sobela (Pionowy)
 def sobel(img, degrees):
@@ -76,7 +79,33 @@ def sobel(img, degrees):
 
     kernel = kernels.get(degrees, kernels[0])
     
-    return apply_kernel(img, kernel)
+    res = apply_kernel(img, kernel)
+    return np.clip(np.abs(res), 0, 255).astype(np.uint8)
+
+def roberts_cross(img, orientation="orthogonal"):
+    if not (np.array_equal(img[:, :, 0], img[:, :, 1])
+            and np.array_equal(img[:, :, 1], img[:, :, 2])):
+        img = grey_scale(img)
+
+    # orthogonal masks
+    mask_1 = np.array([[ 1, -1], [ 0,  0]])
+    mask_2 = np.array([[ 1,  0], [-1,  0]])
+
+    if orientation == "diagonal":
+        mask_1 = np.array([[ 1,  0], [ 0, -1]])
+        mask_2 = np.array([[ 0,  1], [-1,  0]])
+
+    res_1 = apply_kernel(img, mask_1)  # raw float
+    res_2 = apply_kernel(img, mask_2)  # raw float
+    combined = np.abs(res_1) + np.abs(res_2)
+    return np.clip(combined, 0, 255).astype(np.uint8)
+
+    
+
+
+    
+
+    
 
 
 

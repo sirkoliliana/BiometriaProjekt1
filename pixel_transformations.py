@@ -1,7 +1,5 @@
 import numpy as np
 
-# TODO: Implement all transformations in this file. Later import them in app.py and use them in apply_operation.
-
 # Konwersja do odcieni szarości
 # Uwzględnienie wag kolorów
 def monotone(img):

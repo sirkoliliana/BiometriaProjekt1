@@ -36,6 +36,10 @@ def apply_kernel(img, kernel):
                 
     return res   
 
+# Jako oddzielna funkcja żeby przyciąć po nałożeniu maski
+def custom_kernel(img, kernel):
+    res = apply_kernel(img, kernel)
+    return np.clip(res, 0, 255).astype(np.uint8)
 
 # Filtr uśredniający z maską nxn (macierz samych jedynek)
 def averaging_filter(img, n):

@@ -104,7 +104,15 @@ def roberts_cross(img, orientation="orthogonal"):
     combined = np.abs(res_1) + np.abs(res_2)
     return np.clip(combined, 0, 255).astype(np.uint8)
 
-    
+# Emboss
+def emboss(img, fade: float):
+    kernel = np.array([
+        [-2, -1,  0],
+        [-1,  1 + fade,  1],
+        [ 0,  1,  2]
+    ], dtype=float)
+    res = apply_kernel(img, kernel)
+    return np.clip(res, 0, 255).astype(np.uint8)    
 
 
     

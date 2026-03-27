@@ -108,7 +108,7 @@ def build_filters_tab():
     with dpg.tab(label="Filters"):
         dpg.add_combo(
             ["None", "Custom Kernel", "Blur (Averaging)", "Gaussian Blur", 
-             "Sharpen", "Sobel Edge Detection", "Robert's Cross"],
+             "Sharpen", "Sobel Edge Detection", "Robert's Cross", "Emboss"],
             label="Filter",
             default_value="None",
             tag="filter_combo",
@@ -152,6 +152,11 @@ def build_filters_tab():
                             default_value=default,
                             format="%.1f"
                         )
+
+        with dpg.group(tag="emboss_options", show=False):
+            dpg.add_text("Emboss fade Options")
+            dpg.add_slider_float(label="Emboss", tag="emboss_slider",
+                                        min_value=0.1, max_value=5.0, default_value=1.0)
 
         dpg.add_spacer(height=4)
         dpg.add_button(label="Add to Pipeline", callback=add_filter)
@@ -237,9 +242,6 @@ def build_ui():
                     dpg.add_text("Preview")
                     dpg.add_image("image_texture")
                     
-                    # dpg.add_spacer(height=10) # saving image button under preview
-                    # dpg.add_button(label="Save Image", callback=show_save_dialog)
-
                 with dpg.table_cell():   # right: controls + pipeline + charts
                     with dpg.tab_bar():
                         build_pixel_transforms_tab()

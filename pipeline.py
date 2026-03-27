@@ -1,7 +1,7 @@
 import numpy as np
 import state
 from models import Operation
-from filters import custom_kernel, averaging_filter, gaussian_blur, sharpen_filter, sobel, roberts_cross
+from filters import custom_kernel, averaging_filter, gaussian_blur, sharpen_filter, sobel, roberts_cross, emboss
 from pixel_transformations import (grey_scale, gamma_transform, log_transform, invert, 
                                    histogram_equalization, histogram_equalization_3_chanel,
                                    contrast_stretching, contrast_stretching_3_channel,
@@ -27,6 +27,7 @@ OPERATIONS = {
     "Contrast Stretching (RGB)":     lambda img, p: contrast_stretching_3_channel(img),
     "Add Images":                    lambda img, p: subtract_images(img, p.get("image")) if p.get("subtract") else add_images(img, p.get("image")),
     "Blend Image":                   lambda img, p: mix_images(img, p.get("image"), p.get("alpha", 0.5)),
+    "Emboss":                        lambda img, p: emboss(img, p.get("emboss", 1.0)),
 }
 
 def run_operation(img: np.ndarray, op: Operation) -> np.ndarray:

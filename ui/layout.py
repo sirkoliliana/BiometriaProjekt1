@@ -40,6 +40,7 @@ def build_pixel_transforms_tab():
         dpg.add_combo([
             "None",
             "Grayscale",
+            "Monochrome",
             "Brightness", 
             "Gamma", 
             "Binarize simple", 

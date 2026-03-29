@@ -5,7 +5,7 @@ from filters import custom_kernel, averaging_filter, gaussian_blur, sharpen_filt
 from pixel_transformations import (grey_scale, gamma_transform, log_transform, invert, 
                                    histogram_equalization, histogram_equalization_3_chanel,
                                    contrast_stretching, contrast_stretching_3_channel,
-                                   binarize_simple, binarize_bernsen, add_images, subtract_images, mix_images)
+                                   binarize_simple, binarize_bernsen, add_images, monochrome, subtract_images, mix_images)
 
 # dispatch table - add new operations here
 OPERATIONS = {
@@ -16,6 +16,7 @@ OPERATIONS = {
     "Robert's Cross":                lambda img, p: roberts_cross(img, p.get("orientation", "orthogonal")),
     "Custom Kernel":                 lambda img, p: custom_kernel(img, np.array(p.get("kernel"))),
     "Grayscale":                     lambda img, p: grey_scale(img),
+    "Monochrome":                    lambda img, p: monochrome(img),
     "Brightness":                    lambda img, p: log_transform(img),
     "Gamma":                         lambda img, p: gamma_transform(img, p.get("gamma", 1.0)),
     "Invert":                        lambda img, p: invert(img),

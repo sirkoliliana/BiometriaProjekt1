@@ -127,6 +127,9 @@ def add_pixel_transform():
     if selected == "Grayscale":
         op = Operation(name="Grayscale")
 
+    if selected == "Monochrome":
+        op = Operation(name="Monochrome")
+
     elif selected == "Invert":
         op = Operation(name="Invert")
 

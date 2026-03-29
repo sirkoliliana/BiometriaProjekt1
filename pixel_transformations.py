@@ -2,7 +2,7 @@ import numpy as np
 
 # Konwersja do odcieni szarości
 # Uwzględnienie wag kolorów
-def monotone(img):
+def monochrome(img):
     weights = np.array([0.299, 0.587, 0.114], dtype=np.float32)
     gray = np.dot(img.astype(np.float32), weights)  # (H, W)
     gray = np.clip(gray, 0, 255).astype(np.uint8)

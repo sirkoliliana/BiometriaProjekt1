@@ -108,7 +108,7 @@ def build_filters_tab():
     with dpg.tab(label="Filters"):
         dpg.add_combo(
             ["None", "Custom Kernel", "Blur (Averaging)", "Gaussian Blur", 
-             "Sharpen", "Sobel Edge Detection", "Robert's Cross"],
+             "Sharpen", "Sobel Edge Detection", "Robert's Cross", "Emboss"],
             label="Filter",
             default_value="None",
             tag="filter_combo",
@@ -140,19 +140,23 @@ def build_filters_tab():
             )
 
         with dpg.group(tag="custom_kernel_options", show=False):
-            dpg.add_text("Enter 3x3 Kernel Matrix:")
-            with dpg.group(horizontal=True):
-                dpg.add_input_float(tag="k00", width=60, step=0, default_value=0.0)
-                dpg.add_input_float(tag="k01", width=60, step=0, default_value=0.0)
-                dpg.add_input_float(tag="k02", width=60, step=0, default_value=0.0)
-            with dpg.group(horizontal=True):
-                dpg.add_input_float(tag="k10", width=60, step=0, default_value=0.0)
-                dpg.add_input_float(tag="k11", width=60, step=0, default_value=1.0)
-                dpg.add_input_float(tag="k12", width=60, step=0, default_value=0.0)
-            with dpg.group(horizontal=True):
-                dpg.add_input_float(tag="k20", width=60, step=0, default_value=0.0)
-                dpg.add_input_float(tag="k21", width=60, step=0, default_value=0.0)
-                dpg.add_input_float(tag="k22", width=60, step=0, default_value=0.0)
+            dpg.add_text("Enter 5x5 Kernel Matrix:")
+            for i in range(5):
+                with dpg.group(horizontal=True):
+                    for j in range(5):
+                        default = 1 if (i == 2 and j == 2) else 0  # tylko środek = 1
+                        dpg.add_input_float(
+                            tag=f"k{i}{j}",
+                            width=60,
+                            step=0,
+                            default_value=default,
+                            format="%.1f"
+                        )
+
+        with dpg.group(tag="emboss_options", show=False):
+            dpg.add_text("Emboss fade Options")
+            dpg.add_slider_float(label="Emboss", tag="emboss_slider",
+                                        min_value=0.1, max_value=5.0, default_value=1.0)
 
         dpg.add_spacer(height=4)
         dpg.add_button(label="Add to Pipeline", callback=add_filter)
@@ -237,7 +241,7 @@ def build_ui():
                 with dpg.table_cell():   # left: image preview
                     dpg.add_text("Preview")
                     dpg.add_image("image_texture")
-
+                    
                 with dpg.table_cell():   # right: controls + pipeline + charts
                     with dpg.tab_bar():
                         build_pixel_transforms_tab()

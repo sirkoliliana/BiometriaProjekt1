@@ -52,6 +52,7 @@ def on_filter_change(sender, app_data):
     dpg.hide_item("sobel_options")
     dpg.hide_item("custom_kernel_options")
     dpg.hide_item("roberts_cross_options")
+    dpg.hide_item("emboss_options")
 
     if app_data == "Blur (Averaging)":
         dpg.show_item("blur_options")
@@ -61,6 +62,8 @@ def on_filter_change(sender, app_data):
         dpg.show_item("roberts_cross_options")
     elif app_data == "Custom Kernel":
         dpg.show_item("custom_kernel_options")
+    elif app_data == "Emboss":
+        dpg.show_item("emboss_options")
 
 
 def on_pt_change(sender, app_data):
@@ -103,8 +106,11 @@ def add_filter():
         op = Operation(name="Robert's Cross", params={"orientation": dpg.get_value("roberts_cross_orientation")})
 
     elif selected == "Custom Kernel":
-        rows = [[dpg.get_value(f"k{i}{j}") for j in range(3)] for i in range(3)]
+        rows = [[dpg.get_value(f"k{i}{j}") for j in range(5)] for i in range(5)]
         op = Operation(name="Custom Kernel", params={"kernel": np.array(rows).tolist()})
+
+    elif selected == "Emboss":
+        op = Operation(name="Emboss", params={"emboss": dpg.get_value("emboss_slider")})
 
     else:
         return
@@ -181,3 +187,5 @@ def reset_pipeline():
     state.pipeline.clear()
     state.current_image = state.original_image.copy()
     _refresh_ui()
+
+  

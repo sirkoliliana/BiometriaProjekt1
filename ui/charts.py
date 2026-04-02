@@ -6,7 +6,7 @@ def update_histogram(img: np.ndarray):
     gray = img.mean(axis=2) if img.ndim == 3 else img
     counts, bin_edges = np.histogram(gray.flatten(), bins=256, range=(0, 256))
     dpg.configure_item("hist_series", x=bin_edges[:-1].tolist(), y=counts.tolist())
-    dpg.set_axis_limits("histogram_x_axis", 0, 255)   # ← add this
+    dpg.set_axis_limits("histogram_x_axis", 0, 255) 
     dpg.set_axis_limits("histogram_y_axis", 0, int(counts.max() * 1.05))
 
 def update_rgb_histogram(img: np.ndarray):
@@ -18,7 +18,7 @@ def update_rgb_histogram(img: np.ndarray):
         counts, bin_edges = np.histogram(channel.flatten(), bins=256, range=(0, 256))
         dpg.configure_item(f"hist_series_{color}", x=bin_edges[:-1].tolist(), y=counts.tolist())
         max_count = max(max_count, int(counts.max()))
-    dpg.set_axis_limits("histogram_rgb_x_axis", 0, 255)   # ← add this
+    dpg.set_axis_limits("histogram_rgb_x_axis", 0, 255) 
     dpg.set_axis_limits("histogram_rgb_y_axis", 0, int(max_count * 1.05))
 
 def update_projection(img: np.ndarray):

@@ -95,12 +95,13 @@ def roberts_cross(img, orientation="orthogonal"):
     mask_1 = np.array([[ 1, -1], [ 0,  0]])
     mask_2 = np.array([[ 1,  0], [-1,  0]])
 
+    # diagonal masks
     if orientation == "diagonal":
         mask_1 = np.array([[ 1,  0], [ 0, -1]])
         mask_2 = np.array([[ 0,  1], [-1,  0]])
 
-    res_1 = apply_kernel(img, mask_1)  # raw float
-    res_2 = apply_kernel(img, mask_2)  # raw float
+    res_1 = apply_kernel(img, mask_1)
+    res_2 = apply_kernel(img, mask_2) 
     combined = np.abs(res_1) + np.abs(res_2)
     return np.clip(combined, 0, 255).astype(np.uint8)
 
@@ -113,15 +114,3 @@ def emboss(img, fade: float):
     ], dtype=float)
     res = apply_kernel(img, kernel)
     return np.clip(res, 0, 255).astype(np.uint8)    
-
-
-    
-
-    
-
-
-
-
-
-
-

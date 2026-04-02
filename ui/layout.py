@@ -166,7 +166,7 @@ def build_histogram_panel():
     with dpg.group(horizontal=False, tag="histogram_group", show=True):
         dpg.add_text("Gray-scale Histogram")
         with dpg.plot(label="", height=200, width=-1, tag="hist_plot"):
-            dpg.add_plot_axis(dpg.mvXAxis, label="Pixel Value", tag="histogram_x_axis")  # ← add tag
+            dpg.add_plot_axis(dpg.mvXAxis, label="Pixel Value", tag="histogram_x_axis") 
             dpg.add_plot_axis(dpg.mvYAxis, label="Count", tag="histogram_y_axis")
             dpg.add_bar_series([], [], tag="hist_series", parent="histogram_y_axis", weight=1.0)
         
@@ -186,17 +186,16 @@ def build_histogram_panel():
             with dpg.theme_component(dpg.mvBarSeries):
                 dpg.add_theme_color(dpg.mvPlotCol_Fill, [50, 100, 255, 100], category=dpg.mvThemeCat_Plots)
                 dpg.add_theme_color(dpg.mvPlotCol_Line, [50, 100, 255, 100], category=dpg.mvThemeCat_Plots)
-                            # Plot
+        # Plot
         dpg.add_text("RGB Histograms")
         with dpg.plot(label="", height=200, width=-1, tag="hist_plot_rgb"):
-            dpg.add_plot_axis(dpg.mvXAxis, label="Pixel Value", tag="histogram_rgb_x_axis")  # ← add tag
+            dpg.add_plot_axis(dpg.mvXAxis, label="Pixel Value", tag="histogram_rgb_x_axis") 
             dpg.add_plot_axis(dpg.mvYAxis, label="Count", tag="histogram_rgb_y_axis")
 
             dpg.add_bar_series([], [], tag="hist_series_red", parent="histogram_rgb_y_axis", weight=1.0)
             dpg.add_bar_series([], [], tag="hist_series_green", parent="histogram_rgb_y_axis", weight=1.0)
             dpg.add_bar_series([], [], tag="hist_series_blue", parent="histogram_rgb_y_axis", weight=1.0)
 
-        # Bind themes
         dpg.bind_item_theme("hist_series_red", red_theme)
         dpg.bind_item_theme("hist_series_green", green_theme)
         dpg.bind_item_theme("hist_series_blue", blue_theme)
@@ -225,7 +224,7 @@ def build_pipeline_display():
         dpg.add_button(label="Reset All", callback=reset_pipeline)
 
 def build_ui():
-    build_texture_registry(numpy_to_dpg(state.current_image))  # ← pass the argument
+    build_texture_registry(numpy_to_dpg(state.current_image)) 
     build_file_dialogs()
 
     with dpg.window(tag="main_window"):

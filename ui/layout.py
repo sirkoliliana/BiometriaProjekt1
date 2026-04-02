@@ -14,19 +14,17 @@ def build_texture_registry(initial_texture):
         dpg.add_dynamic_texture(state.IMG_W, state.IMG_H, initial_texture, tag="image_texture")
 
 def build_file_dialogs():
+    img_filter = "Image Files (*.png *.jpg *.bmp){.png,.PNG,.jpg,.JPG,.jpeg,.JPEG,.bmp,.BMP}"
+
     with dpg.file_dialog(show=False, callback=open_callback,
                          cancel_callback=cancel_callback,
                          tag="open_dialog_id", width=700, height=400):
-        dpg.add_file_extension(".png")
-        dpg.add_file_extension(".jpg")
-        dpg.add_file_extension(".bmp")
+        dpg.add_file_extension(img_filter)
 
     with dpg.file_dialog(show=False, callback=save_callback,
                          cancel_callback=cancel_callback,
                          tag="save_dialog_id", width=700, height=400):
-        dpg.add_file_extension(".png")
-        dpg.add_file_extension(".jpg")
-        dpg.add_file_extension(".bmp")
+        dpg.add_file_extension(img_filter)
 
 def build_toolbar():
     with dpg.group(horizontal=True):

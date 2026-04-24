@@ -85,6 +85,14 @@ def on_pt_change(sender, app_data):
         dpg.show_item("blend_image_options")
 
 
+# Operacje morfologiczne
+def on_morph_change(sender, app_data):
+    dpg.hide_item("morph_options")
+
+    if app_data != "None":
+        dpg.show_item("morph_options")
+
+
 def add_filter():
     selected = dpg.get_value("filter_combo")
     if selected == "None":
@@ -175,6 +183,27 @@ def add_pixel_transform():
 
     else:
         return
+
+    state.pipeline.append(op)
+    _refresh_ui()
+
+# Operacje morfologiczne
+def add_morph_operation():
+    selected = dpg.get_value("morph_combo")
+
+    if selected == "None":
+        return
+
+    kernel_size = dpg.get_value("morph_kernel")
+
+    # wymuszenie nieparzystości
+    if kernel_size % 2 == 0:
+        kernel_size += 1
+
+    op = Operation(
+        name=selected,
+        params={"kernel_size": kernel_size}
+    )
 
     state.pipeline.append(op)
     _refresh_ui()

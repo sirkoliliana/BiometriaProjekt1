@@ -6,6 +6,7 @@ from pixel_transformations import (grey_scale, gamma_transform, log_transform, i
                                    histogram_equalization, histogram_equalization_3_chanel,
                                    contrast_stretching, contrast_stretching_3_channel,
                                    binarize_simple, binarize_bernsen, add_images, monochrome, subtract_images, mix_images)
+from morphological import erosion, dilation, opening, closing
 
 # dispatch table - add new operations here
 OPERATIONS = {
@@ -29,6 +30,11 @@ OPERATIONS = {
     "Add Images":                    lambda img, p: subtract_images(img, p.get("image")) if p.get("subtract") else add_images(img, p.get("image")),
     "Blend Image":                   lambda img, p: mix_images(img, p.get("image"), p.get("alpha", 0.5)),
     "Emboss":                        lambda img, p: emboss(img, p.get("emboss", 1.0)),
+    # operacje morfologiczne
+    "Erosion":                       lambda img, p: erosion(img, p.get("kernel_size", 3.0)),
+    "Dilation":                      lambda img, p: dilation(img, p.get("kernel_size", 3.0)),
+    "Opening":                       lambda img, p: opening(img, p.get("kernel_size", 3.0)),
+    "Closing":                       lambda img, p: closing(img, p.get("kernel_size", 3.0)),
 }
 
 def run_operation(img: np.ndarray, op: Operation) -> np.ndarray:

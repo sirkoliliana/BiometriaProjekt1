@@ -4,9 +4,9 @@ import dearpygui.dearpygui as dpg
 import numpy as np
 import state
 from ui.charts import numpy_to_dpg
-from ui.callbacks import (add_filter, add_pixel_transform, undo, 
+from ui.callbacks import (add_filter, add_pixel_transform, undo, add_morph_operation,
                            reset_pipeline, open_callback, save_callback, 
-                           cancel_callback, on_filter_change, on_pt_change)
+                           cancel_callback, on_filter_change, on_pt_change, on_morph_change)
 
 
 def build_texture_registry(initial_texture):
@@ -162,6 +162,33 @@ def build_filters_tab():
         dpg.add_spacer(height=10)
         dpg.add_separator()
 
+
+# Operacje morfologiczne
+def build_morphological_tab():
+    with dpg.tab(label="Morphological Operations"):
+        dpg.add_combo(
+            ["None", "Erosion", "Dilation", "Opening", "Closing"],
+            label="Operation",
+            default_value="None",
+            tag="morph_combo",
+            callback=on_morph_change,
+            width=200
+        )
+
+        with dpg.group(tag="morph_options", show=False):
+            dpg.add_text("Morphological Options")
+
+            dpg.add_slider_int(
+                label="Kernel Size",
+                tag="morph_kernel",
+                min_value=1,
+                max_value=21,
+                default_value=3
+            )
+            
+        dpg.add_button(label="Add to Pipeline", callback=add_morph_operation)
+
+
 def build_histogram_panel():
     with dpg.group(horizontal=False, tag="histogram_group", show=True):
         dpg.add_text("Gray-scale Histogram")
@@ -244,6 +271,7 @@ def build_ui():
                     with dpg.tab_bar():
                         build_pixel_transforms_tab()
                         build_filters_tab()
+                        build_morphological_tab()
 
                     build_pipeline_display()
                     build_histogram_panel()

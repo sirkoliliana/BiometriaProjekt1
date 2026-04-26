@@ -5,7 +5,8 @@ from filters import custom_kernel, averaging_filter, gaussian_blur, sharpen_filt
 from pixel_transformations import (grey_scale, gamma_transform, log_transform, invert, 
                                    histogram_equalization, histogram_equalization_3_chanel,
                                    contrast_stretching, contrast_stretching_3_channel,
-                                   binarize_simple, binarize_bernsen, add_images, monochrome, subtract_images, mix_images)
+                                   binarize_simple, binarize_avg, binarize_bernsen, add_images, 
+                                   monochrome, subtract_images, mix_images)
 from morphological import erosion, dilation, opening, closing
 
 # dispatch table - add new operations here
@@ -22,6 +23,7 @@ OPERATIONS = {
     "Gamma":                         lambda img, p: gamma_transform(img, p.get("gamma", 1.0)),
     "Invert":                        lambda img, p: invert(img),
     "Binarize simple":               lambda img, p: binarize_simple(img, p.get("threshold", 128)),
+    "Binarize Avg":                  lambda img, p: binarize_avg(img, p.get("adjust", 1)),
     "Binarize Bernsen":              lambda img, p: binarize_bernsen(img, p.get("contrast", 15)),
     "Histogram Equalization (Gray)": lambda img, p: histogram_equalization(img),
     "Histogram Equalization (RGB)":  lambda img, p: histogram_equalization_3_chanel(img),

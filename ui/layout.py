@@ -42,6 +42,7 @@ def build_pixel_transforms_tab():
             "Brightness", 
             "Gamma", 
             "Binarize simple", 
+            "Binarize Avg", 
             "Binarize Bernsen",
             "Invert",
             "Add Images",
@@ -63,7 +64,13 @@ def build_pixel_transforms_tab():
             dpg.add_text("Gamma Options")
             dpg.add_slider_float(label="Gamma", tag="gamma_slider",
                                     min_value=0.1, max_value=5.0, default_value=1.0)
-            
+
+        # Opcje dla avg (Binarize)
+        with dpg.group(tag="binarize_avg_options", show=False):
+            dpg.add_text("Binarize Avg Settings")
+            dpg.add_slider_float(label="adjust", tag="binarize_avg_slider",
+                                min_value=0.1, max_value=50, default_value=1)
+
         # Opcje dla Bernsena (Binarize)
         with dpg.group(tag="binarize_options", show=False):
             dpg.add_text("Bernsen Method Settings")
@@ -156,6 +163,7 @@ def build_filters_tab():
             dpg.add_text("Emboss fade Options")
             dpg.add_slider_float(label="Emboss", tag="emboss_slider",
                                         min_value=0.1, max_value=5.0, default_value=1.0)
+            
 
         dpg.add_spacer(height=4)
         dpg.add_button(label="Add to Pipeline", callback=add_filter)
@@ -182,7 +190,7 @@ def build_morphological_tab():
                 label="Kernel Size",
                 tag="morph_kernel",
                 min_value=1,
-                max_value=21,
+                max_value=40,
                 default_value=3
             )
 

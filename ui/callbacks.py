@@ -69,6 +69,7 @@ def on_filter_change(sender, app_data):
 def on_pt_change(sender, app_data):
     dpg.hide_item("threshold_options")
     dpg.hide_item("gamma_options")
+    dpg.hide_item("binarize_avg_options")
     dpg.hide_item("binarize_options")
     dpg.hide_item("add_image_options")
     dpg.hide_item("blend_image_options")
@@ -77,6 +78,8 @@ def on_pt_change(sender, app_data):
         dpg.show_item("gamma_options")
     elif app_data == "Binarize Bernsen":
         dpg.show_item("binarize_options")
+    elif app_data == "Binarize Avg":
+        dpg.show_item("binarize_avg_options")
     elif app_data == "Binarize simple":
         dpg.show_item("threshold_options")
     elif app_data == "Add Images":
@@ -149,6 +152,9 @@ def add_pixel_transform():
 
     elif selected == "Binarize simple":
         op = Operation(name="Binarize simple", params={"threshold": dpg.get_value("threshold_slider")})
+
+    elif selected == "Binarize Avg":
+        op = Operation(name="Binarize Avg", params={"adjust": dpg.get_value("binarize_avg_slider")})
 
     elif selected == "Binarize Bernsen":
         op = Operation(name="Binarize Bernsen", params={"contrast": dpg.get_value("binarize_slider")})

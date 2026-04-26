@@ -60,6 +60,22 @@ def binarize_simple(img, t_val=128):
     # powrót do rgb
     return np.stack([binary, binary, binary], axis=-1)
 
+# Binaryzacja - do projektu 2
+def binarize_avg(img, x = 1):
+    # zamiana na grayscale
+    if img.ndim == 3:
+        gray = (img[:, :, 0].astype(float) + img[:, :, 1].astype(float) + img[:, :, 2].astype(float)) / 3
+    else:
+        gray = img.astype(float)
+
+    # jeśli piksel > P/x to 255, inaczej 0
+    P = np.mean(gray)
+    P_x = P/x
+    binary = np.where(gray > P_x, 255, 0).astype(np.uint8)
+
+    # powrót do rgb
+    return np.stack([binary, binary, binary], axis=-1)
+
 # Binaryzacja - metoda lokalna Bernsena
 # wyznaczanie t lokalnie na podstawie min max okienka
 def binarize_bernsen(img, window_size = 15, contrast_threshold=15):

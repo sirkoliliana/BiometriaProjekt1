@@ -195,6 +195,7 @@ def add_morph_operation():
         return
 
     kernel_size = dpg.get_value("morph_kernel")
+    shape = dpg.get_value("morph_shape")
 
     # wymuszenie nieparzystości
     if kernel_size % 2 == 0:
@@ -202,7 +203,10 @@ def add_morph_operation():
 
     op = Operation(
         name=selected,
-        params={"kernel_size": kernel_size}
+        params={
+            "kernel_size": kernel_size,
+            "shape": shape
+        }
     )
 
     state.pipeline.append(op)

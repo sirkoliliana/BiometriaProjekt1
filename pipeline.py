@@ -31,10 +31,10 @@ OPERATIONS = {
     "Blend Image":                   lambda img, p: mix_images(img, p.get("image"), p.get("alpha", 0.5)),
     "Emboss":                        lambda img, p: emboss(img, p.get("emboss", 1.0)),
     # operacje morfologiczne
-    "Erosion":                       lambda img, p: erosion(img, p.get("kernel_size", 3.0)),
-    "Dilation":                      lambda img, p: dilation(img, p.get("kernel_size", 3.0)),
-    "Opening":                       lambda img, p: opening(img, p.get("kernel_size", 3.0)),
-    "Closing":                       lambda img, p: closing(img, p.get("kernel_size", 3.0)),
+    "Erosion":                       lambda img, p: erosion(img, p.get("kernel_size", 3.0), p.get("shape", "square")),
+    "Dilation":                      lambda img, p: dilation(img, p.get("kernel_size", 3.0), p.get("shape", "square")),
+    "Opening":                       lambda img, p: opening(img, p.get("kernel_size", 3.0), p.get("shape", "square")),
+    "Closing":                       lambda img, p: closing(img, p.get("kernel_size", 3.0), p.get("shape", "square")),
 }
 
 def run_operation(img: np.ndarray, op: Operation) -> np.ndarray:

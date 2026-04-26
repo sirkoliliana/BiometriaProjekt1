@@ -185,7 +185,15 @@ def build_morphological_tab():
                 max_value=21,
                 default_value=3
             )
-            
+
+            dpg.add_combo(
+                ["square", "cross", "circle"],
+                label="Kernel Shape",
+                tag="morph_shape",
+                default_value="square",
+                width=200
+            )
+
         dpg.add_button(label="Add to Pipeline", callback=add_morph_operation)
 
 

@@ -70,6 +70,28 @@ def unwrap_iris(img: np.ndarray, cx: int, cy: int, r_inner: int, r_outer: int, n
         result[i] = img[ys, xs]
     return result
 
+def gabor_encode(strip, f=0.1):
+    sigma = 0.5 * np.pi * f
+    avg = strip.mean(axis=0)
+    
+    kernel_size = 32
+    x = np.arange(kernel_size) - kernel_size // 2   # centered around 0
+    kernel_real = np.cos(2 * np.pi * f * x) * np.exp(-x**2 / (2 * sigma**2))
+    kernel_imag = np.sin(2 * np.pi * f * x) * np.exp(-x**2 / (2 * sigma**2))
+    
+    # convolve along the strip → one response per position
+    resp_real = np.convolve(avg, kernel_real, mode='same')
+    resp_imag = np.convolve(avg, kernel_imag, mode='same')
+    
+    # sign of each response → 1 bit per position
+    bits_real = (resp_real > 0).astype(int)
+    bits_imag = (resp_imag > 0).astype(int)
+    
+    return np.concatenate([bits_real, bits_imag])  # 2 × num_angles bits
+
+def get_iris_code(strips, freqs=(0.05, 0.1, 0.2, 0.4)):
+    return np.concatenate([gabor_encode(s, f) for s in strips for f in freqs])
+
 def save_figure(arrays, titles, path, figsize_per=5):
     n = len(arrays)
     fig, axes = plt.subplots(1, n, figsize=(n * figsize_per, figsize_per), squeeze=False)
@@ -135,6 +157,13 @@ def process_image(image_path: str) -> None:
 
     strip_1d = [np.mean(strip, axis=0)[np.linspace(0, len(np.mean(strip, axis=0)) - 1, 128).astype(int)] for strip in strips]
     np.save(os.path.join(img_dir, "features.npy"), np.array(strip_1d))
+
+    code = get_iris_code(strips)
+    return {
+        "code": code,
+        "overlay": overlay
+    }
+    
 
 if __name__ == "__main__":
     os.makedirs(RESULTS_DIR, exist_ok=True)
